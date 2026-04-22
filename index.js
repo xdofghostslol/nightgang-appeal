@@ -64,7 +64,11 @@ client.on('interactionCreate', async interaction => {
     const embed = new EmbedBuilder()
       .setColor("Green")
       .setTitle("Appeal Accepted")
-      .setDescription(`🎉 Congratulations ${user}, your appeal has been accepted!\nYou may now rejoin the server.`)
+      .setDescription(
+  `<:tick:1496537866283647026> **Appeal Accepted**\n\n` +
+  `> Congratulations ${user}, your appeal has been accepted!\n` +
+  `> You may now rejoin the server.`
+)
       .setFooter({ text: "NightGang Appeals" })
       .setTimestamp();
 
