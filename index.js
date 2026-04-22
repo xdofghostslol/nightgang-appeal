@@ -152,4 +152,92 @@ client.on('messageCreate', async (message) => {
   }
 });
 
+const fs = require('fs');
+const path = require('path');
+
+const BANLIST_PATH = path.join(__dirname, 'banlist.json');
+
+// Load / save banlist (simple persistence)
+function loadBanlist() {
+  try {
+    return JSON.parse(fs.readFileSync(BANLIST_PATH, 'utf8'));
+  } catch {
+    return [];
+  }
+}
+function saveBanlist(list) {
+  fs.writeFileSync(BANLIST_PATH, JSON.stringify(list, null, 2));
+}
+
+// ===== FORCEBAN COMMAND =====
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  if (message.content.startsWith('!forceban')) {
+    if (!message.member.permissions.has("BanMembers")) {
+      return message.reply("❌ You don't have permission.");
+    }
+
+    const args = message.content.trim().split(/\s+/);
+    const userId = args[1];
+
+    if (!userId || !/^\d{17,20}$/.test(userId)) {
+      return message.reply("Provide a valid **user ID**.");
+    }
+
+    try {
+      // 1) Ban by ID (works even if user not in server)
+      await message.guild.members.ban(userId, {
+        deleteMessageSeconds: 7 * 24 * 60 * 60, // delete last 7 days of messages
+        reason: `Force banned by ${message.author.tag}`
+      });
+
+      // 2) Persist to local banlist (for rejoin protection)
+      const banlist = loadBanlist();
+      if (!banlist.includes(userId)) {
+        banlist.push(userId);
+        saveBanlist(banlist);
+      }
+
+      const embed = new EmbedBuilder()
+        .setColor("Red")
+        .setDescription(
+          `<:ban:1496554683601260714> User ID **${userId}** has been **permanently force banned**.\n` +
+          `• Recent messages removed (up to 7 days)\n` +
+          `• Added to server banlist (auto-ban on join)`
+        )
+        .setFooter({ text: `By ${message.author.tag}` })
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] });
+
+    } catch (err) {
+      console.error(err);
+      message.reply(`❌ Failed to force ban user.\n${err.message}`);
+    }
+  }
+});
+
+// ===== AUTO-REBAN ON JOIN (blocklist) =====
+client.on('guildMemberAdd', async (member) => {
+  const banlist = loadBanlist();
+  if (banlist.includes(member.id)) {
+    try {
+      await member.ban({ reason: "Auto-ban: on banlist" });
+    } catch (e) {
+      console.error("Auto-ban failed:", e.message);
+    }
+  }
+
+  // Optional: basic anti-alt (kick very new accounts, e.g., < 3 days old)
+  const ACCOUNT_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+  if (Date.now() - member.user.createdTimestamp < ACCOUNT_AGE_MS) {
+    try {
+      await member.kick("Account too new (anti-alt)");
+    } catch (e) {
+      console.error("Anti-alt kick failed:", e.message);
+    }
+  }
+});
+
 client.login(process.env.TOKEN);
