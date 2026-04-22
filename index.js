@@ -240,4 +240,28 @@ client.on('guildMemberAdd', async (member) => {
   }
 });
 
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  if (message.content.startsWith('!announce')) {
+    if (!message.member.permissions.has("ManageGuild")) {
+      return message.reply("❌ You don't have permission.");
+    }
+
+    const args = message.content.split(" ").slice(1);
+    const text = args.join(" ");
+    if (!text) return message.reply("Provide a message.");
+
+    const embed = new EmbedBuilder()
+      .setColor("Blue")
+      .setTitle("<:announcement:1496542405405704192> Announcement")
+      .setDescription(text)
+      .setThumbnail(message.guild.iconURL())
+      .setFooter({ text: `By ${message.author.tag}` })
+      .setTimestamp();
+
+    message.channel.send({ embeds: [embed] });
+  }
+});
+
 client.login(process.env.TOKEN);
