@@ -91,5 +91,65 @@ client.on('interactionCreate', async interaction => {
     await interaction.channel.send({ embeds: [embed] });
   }
 });
-     
+
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  if (message.content.startsWith('!mute')) {
+    if (!message.member.permissions.has("ModerateMembers")) {
+      return message.reply("❌ You don't have permission.");
+    }
+
+    const user = message.mentions.members.first();
+    if (!user) return message.reply("Mention a user to mute.");
+
+    try {
+      await user.timeout(10 * 60 * 1000); // 10 minutes
+
+      const embed = new EmbedBuilder()
+        .setColor("Orange")
+        .setDescription(
+          `<:muted:1496555318598177020> ${user} has been muted.\nDuration: 10 minutes.`
+        )
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] });
+
+    } catch (err) {
+      console.error(err);
+      message.reply("❌ Failed to mute user.");
+    }
+  }
+});
+
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  if (message.content.startsWith('!unmute')) {
+    if (!message.member.permissions.has("ModerateMembers")) {
+      return message.reply("❌ You don't have permission.");
+    }
+
+    const user = message.mentions.members.first();
+    if (!user) return message.reply("Mention a user to unmute.");
+
+    try {
+      await user.timeout(null);
+
+      const embed = new EmbedBuilder()
+        .setColor("Green")
+        .setDescription(
+          `<:unmute:1496555365200826469> ${user} has been unmuted.`
+        )
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] });
+
+    } catch (err) {
+      console.error(err);
+      message.reply("❌ Failed to unmute user.");
+    }
+  }
+});
+
 client.login(process.env.TOKEN);
