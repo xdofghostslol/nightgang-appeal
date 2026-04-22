@@ -53,6 +53,15 @@ client.once('ready', async () => {
   console.log("Commands registered");
 });
 
+new SlashCommandBuilder()
+  .setName('announce')
+  .setDescription('Send an announcement')
+  .addStringOption(option =>
+    option.setName('message')
+      .setDescription('Announcement message')
+      .setRequired(true)
+  )
+
 // ===== COMMAND HANDLER =====
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
@@ -89,6 +98,28 @@ client.on('interactionCreate', async interaction => {
     await interaction.channel.send({ embeds: [embed] });
   }
 });
+
+if (interaction.commandName === 'announce') {
+  const msg = interaction.options.getString('message');
+
+  const embed = new EmbedBuilder()
+    .setColor("Blue")
+    .setDescription(
+      `<:announcement:1496542405405704192> **Announcement**\n\n` +
+      `> ${msg}`
+    )
+    .setThumbnail(interaction.guild.iconURL())
+    .setTimestamp();
+
+  // Private reply (only you see)
+  await interaction.reply({
+    content: "📢 Announcement sent",
+    ephemeral: true
+  });
+
+  // Public message
+  await interaction.channel.send({ embeds: [embed] });
+}
 
 client.on('guildMemberUpdate', (oldMember, newMember) => {
   if (!oldMember.premiumSince && newMember.premiumSince) {
