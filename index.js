@@ -1,15 +1,21 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
+const {
+  Client,
+  GatewayIntentBits,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+  EmbedBuilder
+} = require('discord.js');
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-// When bot is ready
+// ===== READY =====
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  // Register /accept command
   const commands = [
     new SlashCommandBuilder()
       .setName('accept')
@@ -17,13 +23,18 @@ client.once('ready', async () => {
       .addUserOption(option =>
         option.setName('user')
           .setDescription('User')
-          .setRequired(true))
-      .addStringOption(option =>
-        option.setName('reason')
-          .setDescription('Reason')
-          .setRequired(false))
-      .toJSON()
-  ];
+          .setRequired(true)
+      ),
+
+    new SlashCommandBuilder()
+      .setName('deny')
+      .setDescription('Deny an appeal')
+      .addUserOption(option =>
+        option.setName('user')
+          .setDescription('User')
+          .setRequired(true)
+      )
+  ].map(cmd => cmd.toJSON());
 
   const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
@@ -32,23 +43,40 @@ client.once('ready', async () => {
     { body: commands }
   );
 
-  console.log("Slash command registered");
+  console.log("Commands registered");
 });
 
-// Handle command
+// ===== COMMAND HANDLER =====
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
+  const user = interaction.options.getUser('user');
+
+  // ACCEPT
   if (interaction.commandName === 'accept') {
-    const user = interaction.options.getUser('user');
-    const reason = interaction.options.getString('reason') || "No reason provided";
+    const embed = new EmbedBuilder()
+      .setColor("Green")
+      .setTitle("Appeal Accepted")
+      .setDescription(`🎉 Congratulations ${user}, your appeal has been accepted!\nYou may now rejoin the server.`)
+      .setFooter({ text: "NightGang Appeals" })
+      .setTimestamp();
 
-    const msg = `🎉 Congratulations ${user}, your appeal was **accepted**!
-You can now rejoin the server.
+    await interaction.reply({ content: "✅ Done", ephemeral: true });
+    await interaction.channel.send({ embeds: [embed] });
+  }
 
-**Reason:** ${reason}`;
+  // DENY
+  if (interaction.commandName === 'deny') {
+    const embed = new EmbedBuilder()
+      .setColor("Red")
+      .setTitle("Appeal Denied")
+      .setDescription(`❌ Sorry ${user}, your appeal has been denied.\nYou may appeal again later.`)
+      .setFooter({ text: "NightGang Appeals" })
+      .setTimestamp();
 
-await interaction.reply({ content: "✅ Appeal accepted.", ephemeral: true });
-await interaction.channel.send(msg);
+    await interaction.reply({ content: "❌ Done", ephemeral: true });
+    await interaction.channel.send({ embeds: [embed] });
+  }
+});
 
 client.login(process.env.TOKEN);
