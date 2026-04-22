@@ -48,8 +48,7 @@ You can now rejoin the server.
 
 **Reason:** ${reason}`;
 
-    await interaction.reply(msg);
-  }
-});
+await interaction.reply({ content: "✅ Appeal accepted.", ephemeral: true });
+await interaction.channel.send(msg);
 
 client.login(process.env.TOKEN);
