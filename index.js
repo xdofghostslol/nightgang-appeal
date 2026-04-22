@@ -81,7 +81,9 @@ client.on('interactionCreate', async interaction => {
     const embed = new EmbedBuilder()
       .setColor("Red")
       .setTitle("Appeal Denied")
-      .setDescription(`<:no:1496537935959294213> ${user}, your appeal has been denied.`
+      .setDescription(
+  `<:no:1496537935959294213> ${user}, your appeal has been denied.\nYou may try again later.`
+)
       .setFooter({ text: "NightGang Appeals" })
       .setTimestamp();
 
@@ -89,41 +91,5 @@ client.on('interactionCreate', async interaction => {
     await interaction.channel.send({ embeds: [embed] });
   }
 });
-
-client.on('guildMemberUpdate', (oldMember, newMember) => {
-  if (!oldMember.premiumSince && newMember.premiumSince) {
-
-    const channel = newMember.guild.channels.cache.get(BOOST_CHANNEL_ID);
-    if (!channel) return;
-
-    channel.send(
-      `🚀 ${newMember} just boosted **${newMember.guild.name}**!\n\n` +
-      `🎁 Rewards:\n` +
-      `• VIP Chat Access\n` +
-      `• Temp Mod (1 Month)\n` +
-      `• 25k Night Bucks`
-    );
-  }
-});
-
-client.on('messageCreate', (message) => {
-  if (message.author.bot) return;
-
-  if (message.content.startsWith('!boost')) {
-    const user = message.mentions.users.first();
-    if (!user) return message.reply("Mention a user");
-
-    const channel = message.guild.channels.cache.get(BOOST_CHANNEL_ID);
-    if (!channel) return;
-
-    channel.send(
-      `🚀 ${user} just boosted **${message.guild.name}**!\n\n` +
-      `🎁 Rewards:\n` +
-      `• VIP Chat Access\n` +
-      `• Temp Mod (1 Month)\n` +
-      `• 25k Night Bucks`
-    );
-  }
-});
-
+     
 client.login(process.env.TOKEN);
