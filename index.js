@@ -264,4 +264,65 @@ client.on('messageCreate', async (message) => {
   }
 });
 
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  if (message.content.startsWith('!kick')) {
+    if (!message.member.permissions.has("KickMembers")) {
+      return message.reply("❌ You don't have permission.");
+    }
+
+    const args = message.content.split(" ").slice(1);
+    if (!args[0]) return message.reply("Provide a user mention or ID.");
+
+    let member;
+
+    // Try mention first
+    member = message.mentions.members.first();
+
+    // If no mention, try ID
+    if (!member) {
+      try {
+        member = await message.guild.members.fetch(args[0]);
+      } catch {
+        return message.reply("❌ User not found.");
+      }
+    }
+
+    const reason = args.slice(1).join(" ") || "No reason provided.";
+
+    if (!member.kickable) {
+      return message.reply("❌ I cannot kick this user.");
+    }
+
+    try {
+      // DM user before kick
+      try {
+        await member.send(
+          `You have been kicked from **${message.guild.name}**.\nReason: ${reason}`
+        );
+      } catch {
+        // ignore if DMs closed
+      }
+
+      await member.kick(reason);
+
+      const embed = new EmbedBuilder()
+        .setColor("Green")
+        .setTitle("<:tick:1496537866283647026> User Kicked")
+        .setDescription(
+          `${member} has been kicked.\n\n**Reason:** ${reason}`
+        )
+        .setFooter({ text: `By ${message.author.tag}` })
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] });
+
+    } catch (err) {
+      console.error(err);
+      message.reply("❌ Failed to kick user.");
+    }
+  }
+});
+
 client.login(process.env.TOKEN);
